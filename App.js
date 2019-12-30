@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import {
   Text,
   TextInput,
@@ -8,9 +8,13 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
 } from 'react-native';
+
 import Constants from 'expo-constants';
 import DateTimePicker from 'react-native-modal-datetime-picker';
-import Icon from 'react-native-vector-icons/FontAwesome';
+
+import TransactionTextInput from './components/transaction-text-input'
+import TransactionDateInput from './components/transaction-date-input'
+import { createTransaction } from './lib/actions'
 
 export default class App extends React.Component {
   constructor() {
@@ -21,68 +25,35 @@ export default class App extends React.Component {
       fromAccount: '',
       payee: '',
       amount: '',
-      datePickerVisible: false,
       date: '',
+      datePickerVisible: false,
     };
 
-    this.request = this.request.bind(this);
-    this.showDatePicker = this.showDatePicker.bind(this);
-    this.setDate = this.setDate.bind(this);
-    this.hideDatePicker = this.hideDatePicker.bind(this);
+    this.handleSubmit = this.handleSubmit.bind(this);
     this.clearTransactionInfo = this.clearTransactionInfo.bind(this);
+    this.openDatePicker = this.openDatePicker.bind(this);
+    this.closeDatePicker = this.closeDatePicker.bind(this);
+    this.setDate = this.setDate.bind(this);
   }
 
-  request() {
-    const { toAccount, fromAccount, amount, payee, date } = this.state;
-
-    fetch('https://067bb8da.ngrok.io/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        to: toAccount,
-        from: fromAccount,
-        amount: amount,
-        payee: payee,
-        date: date,
-      }),
-    });
-
+  handleSubmit() {
+    createTransaction(this.state)
     this.clearTransactionInfo();
-    alert('Sucess'); // TODO: Handle promise properly
   }
 
-  textInput(title, type, keyboardType = 'default') {
-    return (
-      <View>
-        <Text style={styles.infoText}>{title}</Text>
-        <TextInput
-          value={this.state[type]}
-          style={styles.infoInput}
-          keyboardType={keyboardType}
-          onChangeText={newText => this.setState({ [type]: newText })}
-        />
-      </View>
-    );
+  setDate(date) {
+    const formattedDate = `${date.getFullYear()}/${date.getMonth() +1}/${date.getDate()}`;
+
+    this.setState({ date: formattedDate, datePickerVisible: false })
   }
 
-  dateInput(title) {
-    return (
-      <View>
-        <Text style={styles.infoText}>{title}</Text>
-        <TextInput
-          onFocus={this.showDatePicker}
-          value={this.state.date}
-          style={styles.infoInput}
-        />
-        <DateTimePicker
-          isDarkModeEnabled={true}
-          mode="date"
-          isVisible={this.state.datePickerVisible}
-          onConfirm={this.setDate}
-          onCancel={this.hideDatePicker}
-        />
-      </View>
-    );
+  openDatePicker() {
+    Keyboard.dismiss();
+    this.setState({ datePickerVisible: true });
+  }
+
+  closeDatePicker() {
+    this.setState({ datePickerVisible: false });
   }
 
   clearTransactionInfo() {
@@ -95,52 +66,56 @@ export default class App extends React.Component {
     });
   }
 
-  showDatePicker() {
-    Keyboard.dismiss();
-    this.setState({ datePickerVisible: true });
-  }
-
-  setDate(date) {
-    const formattedDate = `${date.getFullYear()}/${date.getMonth() +
-      1}/${date.getDate()}`;
-    this.setState({ datePickerVisible: false, date: formattedDate });
-  }
-
-  hideDatePicker() {
-    this.setState({ datePickerVisible: false });
-  }
-
   render() {
     return (
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.container}>
           <Text style={styles.paragraph}>Enter a new transaction</Text>
-          {this.textInput('To account', 'toAccount')}
-          {this.textInput('From account', 'fromAccount')}
-          {this.textInput('Payee', 'payee')}
-          {this.textInput('Amount', 'amount', 'numeric')}
-          {this.dateInput('Date')}
-          <Button onPress={this.request} title="Submit" />
+          <TransactionTextInput
+            inputType='toAccount'
+            inputTitle='To account'
+            inputValue={this.state.toAccount}
+            handleOnChangeText={(newState) => {this.setState(newState)}}
+          />
+          <TransactionTextInput
+            inputType='fromAccount'
+            inputTitle='From account'
+            inputValue={this.state.fromAccount}
+            handleOnChangeText={(newState) => {this.setState(newState)}}
+          />
+          <TransactionTextInput
+            inputType='payee'
+            inputTitle='Payee'
+            inputValue={this.state.payee}
+            handleOnChangeText={(newState) => {this.setState(newState)}}
+          />
+          <TransactionTextInput
+            keyboardType='numeric'
+            inputType='amount'
+            inputTitle='Amount'
+            inputValue={this.state.amount}
+            handleOnChangeText={(newState) => {this.setState(newState)}}
+          />
+          <TransactionDateInput
+            inputTitle='Date'
+            inputValue={this.state.date}
+            handleOnFocus={this.openDatePicker}
+          />
+          <DateTimePicker
+            isDarkModeEnabled={true}
+            mode="date"
+            isVisible={this.state.datePickerVisible}
+            onConfirm={this.setDate}
+            onCancel={this.closeDatePicker}
+          />
+          <Button onPress={this.handleSubmit} title="Submit" />
         </View>
       </TouchableWithoutFeedback>
     );
   }
-}
+};
 
 const styles = StyleSheet.create({
-  infoText: {
-    alignSelf: 'right',
-    marginBottom: 4,
-  },
-  infoInput: {
-    paddingLeft: 5,
-    borderRadius: 6,
-    height: 40,
-    width: 300,
-    borderColor: 'black',
-    borderWidth: 1.5,
-    marginBottom: 18,
-  },
   container: {
     alignItems: 'center',
     justifyContent: 'center',
