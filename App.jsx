@@ -59,7 +59,13 @@ export default class App extends React.Component {
 
   handleSubmit() {
     createTransaction(this.state)
-    this.clearTransactionInfo()
+      .then(() => {
+        alert('Transaction sucessfully registered')
+        this.clearTransactionInfo()
+      })
+      .catch(() => {
+        alert('Oops, there was an error. Try again later')
+      })
   }
 
   openDatePicker() {
