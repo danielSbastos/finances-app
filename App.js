@@ -71,7 +71,6 @@ export default class App extends React.Component {
   }
 
   openDatePicker() {
-    Keyboard.dismiss()
     this.setState({ datePickerVisible: true })
   }
 
