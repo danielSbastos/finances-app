@@ -66,6 +66,8 @@ export default class App extends React.Component {
       .catch(() => {
         alert('Oops, there was an error. Try again later')
       })
+
+    this.clearTransactionInfo()
   }
 
   openDatePicker() {
